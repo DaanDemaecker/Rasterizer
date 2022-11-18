@@ -40,12 +40,22 @@ namespace dae
 		SDL_Surface* m_pBackBuffer{ nullptr };
 		uint32_t* m_pBackBufferPixels{};
 
-		//float* m_pDepthBufferPixels{};
+		float* m_pDepthBufferPixels{};
 
 		Camera m_Camera{};
 
 		int m_Width{};
 		int m_Height{};
+
+		float m_AspectRatio{};
+
+		Texture* m_pTexture{nullptr};
+
+		//function that returns the bounding box for a triangle
+		BoundingBox GetBoundingBox(Vector2 v0, Vector2 v1, Vector2 v2);
+
+		//function that renders a single triangle
+		void RenderTriangle(const Mesh& mesh, std::vector<Vertex>& vertices_ndc, std::vector<Vector2> vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const; //W1 Version

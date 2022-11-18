@@ -27,6 +27,9 @@ namespace dae
 		Vector3 up{Vector3::UnitY};
 		Vector3 right{Vector3::UnitX};
 
+		float cameraSpeed{ 10.f };
+		float angularSpeed{ 2.5f };
+
 		float totalPitch{};
 		float totalYaw{};
 
@@ -46,6 +49,19 @@ namespace dae
 			//TODO W1
 			//ONB => invViewMatrix
 			//Inverse(ONB) => ViewMatrix
+			right = Vector3::Cross(Vector3::UnitY, forward).Normalized();
+			up = Vector3::Cross(forward, right).Normalized();
+
+			
+			invViewMatrix = Matrix
+			{
+				right,
+				up,
+				forward,
+				origin
+			};
+
+			viewMatrix = invViewMatrix.Inverse();
 
 			//ViewMatrix => Matrix::CreateLookAtLH(...) [not implemented yet]
 			//DirectX Implementation => https://learn.microsoft.com/en-us/windows/win32/direct3d9/d3dxmatrixlookatlh
@@ -63,8 +79,37 @@ namespace dae
 		{
 			const float deltaTime = pTimer->GetElapsed();
 
-			//Camera Update Logic
-			//...
+			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
+
+
+			origin += (pKeyboardState[SDL_SCANCODE_W] || pKeyboardState[SDL_SCANCODE_Z] || pKeyboardState[SDL_SCANCODE_UP]) * (forward * cameraSpeed * deltaTime);
+			origin -= (pKeyboardState[SDL_SCANCODE_S] || pKeyboardState[SDL_SCANCODE_DOWN]) * (forward * cameraSpeed * deltaTime);
+			origin -= (pKeyboardState[SDL_SCANCODE_Q] || pKeyboardState[SDL_SCANCODE_A] || pKeyboardState[SDL_SCANCODE_LEFT]) * (right * cameraSpeed * deltaTime);
+			origin += (pKeyboardState[SDL_SCANCODE_D] || pKeyboardState[SDL_SCANCODE_RIGHT]) * (right * cameraSpeed * deltaTime);
+
+			//Mouse Input
+			int mouseX{}, mouseY{};
+			const uint32_t mouseState = SDL_GetRelativeMouseState(&mouseX, &mouseY);
+
+			switch (mouseState)
+			{
+			case SDL_BUTTON_LEFT: //right click
+				origin += forward * float(mouseY) * deltaTime;
+				totalYaw += float(mouseX) * deltaTime * angularSpeed;
+				break;
+			case SDL_BUTTON_X1: //left click
+				totalPitch -= float(mouseY) * deltaTime * angularSpeed;
+				totalYaw += float(mouseX) * deltaTime * angularSpeed;
+				break;
+			case SDL_BUTTON_X2: //both click
+				origin.y += float(mouseY) * deltaTime;
+			default:
+				break;
+			}
+
+
+			Matrix rotation = Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw);
+			forward = rotation.TransformVector(Vector3::UnitZ);
 
 			//Update Matrices
 			CalculateViewMatrix();

@@ -8,10 +8,42 @@ namespace dae
 	{
 		Vector3 position{};
 		ColorRGB color{colors::White};
-		//Vector2 uv{}; //W3
+		Vector2 uv{};
 		//Vector3 normal{}; //W4
 		//Vector3 tangent{}; //W4
 		//Vector3 viewDirection{}; //W4
+	};
+
+	struct BoundingBox
+	{
+		BoundingBox(int screenWidth, int screenHeight)
+		{
+			clampX = screenWidth;
+			clampY = screenHeight;
+		}
+
+		int minX{ INT_MAX };
+		int minY{ INT_MAX };
+
+		int maxX{ -INT_MAX };
+		int maxY{ -INT_MAX };
+
+		int margin{ 1 };
+
+		int clampX{};
+		int clampY{};
+
+		void Min(Vector2 point)
+		{
+			minX = Clamp(std::min(minX, int(point.x)) - margin, 0, clampX);
+			minY = Clamp(std::min(minY, int(point.y)) - margin, 0, clampY);
+		}
+
+		void Max(Vector2 point)
+		{
+			maxX = Clamp(std::max(maxX, int(point.x)) + margin, 0, clampX);
+			maxY = Clamp(std::max(maxY, int(point.y)) + margin, 0, clampY);
+		}
 	};
 
 	struct Vertex_Out
