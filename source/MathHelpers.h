@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <algorithm>
 
 namespace dae
 {
@@ -55,5 +56,14 @@ namespace dae
 		if (v < 0.f) return 0.f;
 		if (v > 1.f) return 1.f;
 		return v;
+	}
+
+	inline float Remap(float depthValue, const float min, const float max)
+	{
+		depthValue = std::clamp(depthValue, min, max);
+
+		depthValue = (depthValue - min) / (max - min);
+
+		return depthValue;
 	}
 }

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <iostream>
 
 #include "Camera.h"
 #include "DataTypes.h"
@@ -33,6 +34,8 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
+		void ToggleColor() { m_FinalColor = !m_FinalColor; };
+
 	private:
 		SDL_Window* m_pWindow{};
 
@@ -49,15 +52,20 @@ namespace dae
 
 		float m_AspectRatio{};
 
+		bool m_FinalColor{true};
+
 		Texture* m_pTexture{nullptr};
 
 		//function that returns the bounding box for a triangle
 		BoundingBox GetBoundingBox(Vector2 v0, Vector2 v1, Vector2 v2);
 
+		//function that renders a single mesh
+		void RenderMesh(Mesh& mesh);
+
 		//function that renders a single triangle
-		void RenderTriangle(const Mesh& mesh, std::vector<Vertex>& vertices_ndc, std::vector<Vector2> vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
+		void RenderTriangle(const Mesh& mesh, std::vector<Vertex_Out>& vertices_ndc, std::vector<Vector2> vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
-		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex>& vertices_out) const; //W1 Version
+		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex_Out>& vertices_out) const; //W1 Version
 	};
 }
