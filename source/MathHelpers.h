@@ -60,9 +60,9 @@ namespace dae
 
 	inline float Remap(float depthValue, const float min, const float max)
 	{
-		depthValue = std::clamp(depthValue, min, max);
+		float clamped = std::clamp(depthValue, min, max);
 
-		depthValue = (depthValue - min) / (max - min);
+		depthValue = (clamped - min) / (max - min);
 
 		return depthValue;
 	}

@@ -130,8 +130,7 @@ namespace dae
 
 		bool isOutsideFrustum(const Vector4& vertex)const
 		{
-			return (vertex.x < -1.0f || vertex.x > 1.0f || vertex.y < -1.0f || vertex.y > 1.0f);
+			return (vertex.x <= -1.0f || vertex.x >= 1.0f || vertex.y <= -1.0f || vertex.y >= 1.0f);
 		}
-
 	};
 }

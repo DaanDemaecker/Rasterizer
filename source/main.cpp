@@ -66,6 +66,9 @@ int main(int argc, char* args[])
 				case SDL_SCANCODE_X:
 					takeScreenshot = true;
 					break;
+				case SDL_SCANCODE_F3:
+					pRenderer->ToggleBoundingBox();
+					break;
 				case SDL_SCANCODE_F4:
 					pRenderer->ToggleColor();
 					break;

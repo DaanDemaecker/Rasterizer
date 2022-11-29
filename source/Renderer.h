@@ -34,7 +34,8 @@ namespace dae
 
 		bool SaveBufferToImage() const;
 
-		void ToggleColor() { m_FinalColor = !m_FinalColor; };
+		void ToggleColor() { m_RenderFinalColor = !m_RenderFinalColor; };
+		void ToggleBoundingBox() { m_RenderBoundingBox = !m_RenderBoundingBox; };
 
 	private:
 		SDL_Window* m_pWindow{};
@@ -42,6 +43,8 @@ namespace dae
 		SDL_Surface* m_pFrontBuffer{ nullptr };
 		SDL_Surface* m_pBackBuffer{ nullptr };
 		uint32_t* m_pBackBufferPixels{};
+
+		Mesh m_Mesh{};
 
 		float* m_pDepthBufferPixels{};
 
@@ -52,9 +55,12 @@ namespace dae
 
 		float m_AspectRatio{};
 
-		bool m_FinalColor{true};
+		bool m_RenderBoundingBox{ false };
+		bool m_RenderFinalColor{true};
 
 		Texture* m_pTexture{nullptr};
+
+		void InitializeMesh();
 
 		//function that returns the bounding box for a triangle
 		BoundingBox GetBoundingBox(Vector2 v0, Vector2 v1, Vector2 v2);
@@ -63,9 +69,9 @@ namespace dae
 		void RenderMesh(Mesh& mesh);
 
 		//function that renders a single triangle
-		void RenderTriangle(const Mesh& mesh, std::vector<Vertex_Out>& vertices_ndc, std::vector<Vector2> vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
+		void RenderTriangle(const Mesh& mesh, std::vector<Vector2> vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
-		void VertexTransformationFunction(const std::vector<Vertex>& vertices_in, std::vector<Vertex_Out>& vertices_out) const; //W1 Version
+		void VertexTransformationFunction(Mesh& mesh) const; //W1 Version
 	};
 }

@@ -14,6 +14,16 @@ namespace dae
 		//Vector3 viewDirection{}; //W4
 	};
 
+	struct Vertex_Out
+	{
+		Vector4 position{};
+		ColorRGB color{ colors::White };
+		Vector2 uv{};
+		Vector3 normal{};
+		Vector3 tangent{};
+		//Vector3 viewDirection{};
+	};
+
 	struct BoundingBox
 	{
 		BoundingBox(int screenWidth, int screenHeight)
@@ -44,16 +54,6 @@ namespace dae
 			maxX = Clamp(std::max(maxX, int(point.x)) + margin, -1, clampX);
 			maxY = Clamp(std::max(maxY, int(point.y)) + margin, -1, clampY);
 		}
-	};
-
-	struct Vertex_Out
-	{
-		Vector4 position{};
-		ColorRGB color{ colors::White };
-		Vector2 uv{};
-		Vector3 normal{};
-		Vector3 tangent{};
-		//Vector3 viewDirection{};
 	};
 
 	enum class PrimitiveTopology
