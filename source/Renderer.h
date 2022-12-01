@@ -36,6 +36,19 @@ namespace dae
 
 		void ToggleColor() { m_RenderFinalColor = !m_RenderFinalColor; };
 		void ToggleBoundingBox() { m_RenderBoundingBox = !m_RenderBoundingBox; };
+		void ToggleRotation() { m_RotationEnabled = !m_RotationEnabled; };
+		void ToggleNormal() { m_UseNormalMap = !m_UseNormalMap; };
+		void CycleShading() { m_ShadingMode = static_cast<ShadingMode>((int(m_ShadingMode) + 1) % 4); PrintShadingMode(); };
+
+		void PrintShadingMode();
+
+		enum class ShadingMode
+		{
+			ObservedArea,
+			Diffuse,
+			Specular,
+			Combined
+		};
 
 	private:
 		SDL_Window* m_pWindow{};
@@ -56,9 +69,20 @@ namespace dae
 		float m_AspectRatio{};
 
 		bool m_RenderBoundingBox{ false };
-		bool m_RenderFinalColor{true};
+		bool m_RenderFinalColor{ true };
+		bool m_RotationEnabled{ true };
+		bool m_UseNormalMap{ false };
+		ShadingMode m_ShadingMode{ ShadingMode::ObservedArea };
 
-		Texture* m_pTexture{nullptr};
+		Texture* m_pDiffuseTexture{ nullptr };
+		Texture* m_pGlossTexture{ nullptr };
+		Texture* m_pSpecularTexture{ nullptr };
+		Texture* m_pNormalMap{ nullptr };
+
+		const Vector3 m_LightDirection = Vector3{ .577f, -.577f, .577f }.Normalized();
+		float m_LightIntensity{ 7.f };
+		float m_Shininess{ 25.f };
+		ColorRGB m_Ambient{.025f, .025f, .025f};
 
 		void InitializeMesh();
 
@@ -73,5 +97,10 @@ namespace dae
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(Mesh& mesh) const; //W1 Version
+
+		//Function that shades a single pixel
+		ColorRGB PixelShading(Pixel_Out& pixel);
+
+		ColorRGB CalculateSpecular(const Pixel_Out& pixel, const Vector3& sampeledNormal);
 	};
 }

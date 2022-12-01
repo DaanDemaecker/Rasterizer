@@ -72,6 +72,15 @@ int main(int argc, char* args[])
 				case SDL_SCANCODE_F4:
 					pRenderer->ToggleColor();
 					break;
+				case SDL_SCANCODE_F5:
+					pRenderer->ToggleRotation();
+					break;
+				case SDL_SCANCODE_F6:
+					pRenderer->ToggleNormal();
+					break;
+				case SDL_SCANCODE_F7:
+					pRenderer->CycleShading();
+					break;
 				default:
 					break;
 				}

@@ -39,7 +39,7 @@ namespace dae
 		const int y{ static_cast<int>(uv.y * m_pSurface->h) };
 
 		//getht the index of the pixel in the list
-		const uint32_t pixelIdx{m_pSurfacePixels[x + y * m_pSurface->w]};
+		const uint32_t pixel{m_pSurfacePixels[x + y * m_pSurface->w]};
 
 		//initialize the rgb values in the [0, 255] range
 		Uint8 r{};
@@ -47,7 +47,7 @@ namespace dae
 		Uint8 b{};
 
 		//Get correct values from the texture
-		SDL_GetRGB(pixelIdx, m_pSurface->format, &r, &g, &b);
+		SDL_GetRGB(pixel, m_pSurface->format, &r, &g, &b);
 
 		//return color divided by 255 to get colors in [0, 1] range
 		return ColorRGB{r/255.0f, g/255.0f, b/255.0f};

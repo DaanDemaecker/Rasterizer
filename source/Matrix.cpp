@@ -155,8 +155,8 @@ namespace dae {
 		{
 			{ 1.0f / (aspect * fov), 0.0f, 0.0f, 0.0f },
 			{ 0.0f, 1.0f / fov, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, zf / zf - zn, 1.0f },
-			{ 0.0f, 0.0f, -(zf * zn) / zf - zn, 0.0f }
+			{ 0.0f, 0.0f, zf / (zf - zn), 1.0f },
+			{ 0.0f, 0.0f, -(zf * zn) / (zf - zn), 0.0f }
 		};
 	}
 

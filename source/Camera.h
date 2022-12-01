@@ -25,7 +25,7 @@ namespace dae
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
 		float aspectRatio{ 4/3.f };
 
-		float nearPlane{ 0.01f };
+		float nearPlane{ 0.1f };
 		float farPlane{ 100.f };
 
 		Vector3 forward{Vector3::UnitZ};
@@ -33,7 +33,7 @@ namespace dae
 		Vector3 right{Vector3::UnitX};
 
 		float cameraSpeed{ 10.f };
-		float angularSpeed{ 2.5f };
+		float angularSpeed{ .5f };
 
 		float totalPitch{};
 		float totalYaw{};
