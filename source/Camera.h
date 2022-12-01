@@ -17,6 +17,7 @@ namespace dae
 			fovAngle{_fovAngle},
 			aspectRatio{_aspectRatio}
 		{
+
 		}
 
 

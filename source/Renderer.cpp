@@ -14,6 +14,8 @@
 
 using namespace dae;
 
+#define UseTriangleStruct
+
 Renderer::Renderer(SDL_Window* pWindow) :
 	m_pWindow(pWindow)
 {
@@ -44,12 +46,40 @@ Renderer::Renderer(SDL_Window* pWindow) :
 
 void dae::Renderer::InitializeMesh()
 {
+#ifdef UseTriangleStruct
+
+	m_Mesh =
+	{
+		Mesh{
+			{
+				Vertex{{ -3.f, 3.f, -2.f }, {0, 0, 0}, {0.0f, 0.0f}},
+				Vertex{{ 0.f, 3.f, -2.f }, {0, 0, 0}, { 0.5f, 0.0f }},
+				Vertex{{ 3.f, 3.f, -2.f }, {0, 0, 0}, { 1.0f, 0.0f }},
+				Vertex{{ -3.f, 0.f, -2.f }, {0, 0, 0}, { 0.0f, 0.5f }},
+				Vertex{{ 0.f, 0.f, -2.f }, {0, 0, 0}, { 0.5f, 0.5f }},
+				Vertex{{ 3.f, 0.f, -2.f }, {0, 0, 0}, { 1.0f, 0.5f }},
+				Vertex{{ -3.f, -3.f, -2.f }, {0, 0, 0}, { 0.0f, 1.0f }},
+				Vertex{{ 0.f, -3.f, -2.f }, {0, 0, 0}, { 0.5f, 1.0f }},
+				Vertex{{ 3.f, -3.f, -2.f }, {0, 0, 0}, { 1.0f, 1.0f }},
+		},
+				{
+			3, 0, 4, 1, 5, 2,
+			2, 6,
+			6, 3, 7, 4, 8, 5
+		},
+
+		PrimitiveTopology::TriangleStrip
+		}
+	};
+#else
 	Utils::ParseOBJ("Resources/vehicle.obj", m_Mesh.vertices, m_Mesh.indices);
 
 	m_Mesh.primitiveTopology = PrimitiveTopology::TriangeList;
 
 	const Vector3 position{ Vector3{0.0f, 0.0f, 50.0f} };
 	m_Mesh.worldMatrix = Matrix::CreateTranslation(position);
+
+#endif // UseTriangleStruct
 }
 
 Renderer::~Renderer()
@@ -112,18 +142,35 @@ void dae::Renderer::RenderMesh(Mesh& mesh)
 			});
 	}
 
+	Triangle triangle{};
+
 	switch (mesh.primitiveTopology)
 	{
 	case PrimitiveTopology::TriangeList:
 		for (int i{}; i < mesh.indices.size(); i += 3)
 		{
+#ifdef UseTriangleStruct
+			if (CalculateTriangle(triangle, mesh, vertices_ScreenSpace, i))
+			{
+				RenderTriangle(triangle);
+			}
+#else
 			RenderTriangle(mesh, vertices_ScreenSpace, i);
+#endif // UseTriangleStruct
+
 		}
 		break;
 	case PrimitiveTopology::TriangleStrip:
 		for (int i{}; i < mesh.indices.size() - 2; i++)
 		{
-			RenderTriangle(mesh, vertices_ScreenSpace, i, (i%2) == 1);
+#ifdef UseTriangleStruct
+			if (CalculateTriangle(triangle, mesh, vertices_ScreenSpace, i, (i%2) == 1))
+			{
+				RenderTriangle(triangle);
+			}
+#else
+			RenderTriangle(mesh, vertices_ScreenSpace, i, (i % 2) == 1);
+#endif
 		}
 		break;
 	default:
@@ -131,7 +178,26 @@ void dae::Renderer::RenderMesh(Mesh& mesh)
 	}
 }
 
-void dae::Renderer::RenderTriangle(const Mesh& mesh, std::vector<Vector2> vertices_ScreenSpace, int startIdx, bool flipTriangle)
+bool dae::Renderer::CalculateTriangle(Triangle& triangle, const Mesh& mesh, std::vector<Vector2>& vertices_ScreenSpace, int startIdx, bool flipTriangle)
+{
+	const uint32_t index0{ mesh.indices[startIdx] };
+	const uint32_t index1{ mesh.indices[startIdx + 1 + 1 * flipTriangle] };
+	const uint32_t index2{ mesh.indices[startIdx + 1 + 1 * !flipTriangle] };
+
+	if (index0 == index1 || index1 == index2 || index2 == index0)return false;
+
+	triangle.screen[0] = { vertices_ScreenSpace[index0] };
+	triangle.screen[1] = { vertices_ScreenSpace[index1] };
+	triangle.screen[2] = { vertices_ScreenSpace[index2] };
+
+	triangle.ndc[0] = mesh.vertices_out[index0];
+	triangle.ndc[1] = mesh.vertices_out[index1];
+	triangle.ndc[2] = mesh.vertices_out[index2];
+
+	triangle.boundingBox = GetBoundingBox(triangle.screen[0], triangle.screen[1], triangle.screen[2]);
+}
+
+void dae::Renderer::RenderTriangle(const Mesh& mesh, std::vector<Vector2>& vertices_ScreenSpace, int startIdx, bool flipTriangle)
 {
 	const uint32_t index0{ mesh.indices[startIdx] };
 	const uint32_t index1{ mesh.indices[startIdx + 1 + 1 * flipTriangle] };
@@ -270,6 +336,129 @@ void dae::Renderer::RenderTriangle(const Mesh& mesh, std::vector<Vector2> vertic
 	}
 }
 
+void dae::Renderer::RenderTriangle(const Triangle& triangle)
+{
+	if (m_Camera.isOutsideFrustum(triangle.ndc[0].position) ||
+		m_Camera.isOutsideFrustum(triangle.ndc[1].position) ||
+		m_Camera.isOutsideFrustum(triangle.ndc[2].position))
+	{
+		return;
+	}
+
+	const Vector2 edgeV0V1{ triangle.screen[1] - triangle.screen[0] };
+	const Vector2 edgeV1V2{ triangle.screen[2] - triangle.screen[1] };
+	const Vector2 edgeV2V0{ triangle.screen[0] - triangle.screen[2] };
+
+	const float inverseTriangleArea{ 1.f / Vector2::Cross(edgeV1V2,edgeV2V0) };
+
+	ColorRGB finalColor{};
+
+	for (int px{ triangle.boundingBox.minX }; px < triangle.boundingBox.maxX; ++px)
+	{
+		for (int py{ triangle.boundingBox.minY }; py < triangle.boundingBox.maxY; ++py)
+		{
+			const int pixelIdx{ px + py * m_Width };
+
+			if (m_RenderBoundingBox)
+			{
+				finalColor = ColorRGB{ 1, 1, 1 };
+
+				m_pBackBufferPixels[pixelIdx] = SDL_MapRGB(m_pBackBuffer->format,
+					static_cast<uint8_t>(finalColor.r * 255),
+					static_cast<uint8_t>(finalColor.g * 255),
+					static_cast<uint8_t>(finalColor.b * 255));
+
+				continue;
+			}
+
+			const Vector2 point{ static_cast<float>(px), static_cast<float>(py) };
+
+			const Vector2 v0ToPoint{ point - triangle.screen[0] };
+			const Vector2 v1ToPoint{ point - triangle.screen[1] };
+			const Vector2 v2ToPoint{ point - triangle.screen[2] };
+
+			// Calculate cross product from edge to start to point
+			const float edge01PointCross{ Vector2::Cross(edgeV0V1, v0ToPoint) };
+			const float edge12PointCross{ Vector2::Cross(edgeV1V2, v1ToPoint) };
+			const float edge20PointCross{ Vector2::Cross(edgeV2V0, v2ToPoint) };
+
+			if (!(edge01PointCross > 0 && edge12PointCross > 0 && edge20PointCross > 0)) continue;
+
+			const float weightV0{ edge12PointCross * inverseTriangleArea };
+			const float weightV1{ edge20PointCross * inverseTriangleArea };
+			const float weightV2{ edge01PointCross * inverseTriangleArea };
+
+			float interpolatedZDepth
+			{
+				1.0f /
+						(weightV0 / triangle.ndc[0].position.z +
+						weightV1 / triangle.ndc[1].position.z +
+						weightV2 / triangle.ndc[2].position.z)
+			};
+
+			if (interpolatedZDepth < 0.0f || interpolatedZDepth > 1.0f ||
+				m_pDepthBufferPixels[pixelIdx] < interpolatedZDepth)
+				continue;
+
+			m_pDepthBufferPixels[pixelIdx] = interpolatedZDepth;
+
+			if (m_RenderFinalColor)
+			{
+				const float interpolatedWDepth = 1.0f /
+					(weightV0 / triangle.ndc[0].position.w +
+						weightV1 / triangle.ndc[1].position.w +
+						weightV2 / triangle.ndc[2].position.w);
+
+				Pixel_Out pixelOut{ Vector4{float(px), float(py), interpolatedZDepth, interpolatedWDepth} };
+
+				pixelOut.uv = ((weightV0 * triangle.ndc[0].uv / triangle.ndc[0].position.w) +
+					(weightV1 * triangle.ndc[1].uv / triangle.ndc[1].position.w) +
+					(weightV2 * triangle.ndc[2].uv / triangle.ndc[2].position.w)) * interpolatedWDepth;
+
+				pixelOut.normal =
+				{
+					(((weightV0 * triangle.ndc[0].normal / triangle.ndc[0].position.w) +
+					(weightV1 * triangle.ndc[1].normal / triangle.ndc[1].position.w) +
+					(weightV2 * triangle.ndc[2].normal / triangle.ndc[2].position.w)) * interpolatedWDepth)
+				};
+				pixelOut.normal.Normalize();
+
+				pixelOut.tangent =
+				{
+					(((weightV0 * triangle.ndc[0].tangent / triangle.ndc[0].position.w) +
+					(weightV1 * triangle.ndc[1].tangent / triangle.ndc[1].position.w) +
+					(weightV2 * triangle.ndc[2].tangent / triangle.ndc[2].position.w)) * interpolatedWDepth)
+				};
+
+				pixelOut.viewDirection =
+				{
+					(((weightV0 * triangle.ndc[0].viewDirection / triangle.ndc[0].position.w) +
+					(weightV1 * triangle.ndc[1].viewDirection / triangle.ndc[1].position.w) +
+					(weightV2 * triangle.ndc[2].viewDirection / triangle.ndc[2].position.w)) * interpolatedWDepth)
+				};
+
+				finalColor = m_pDiffuseTexture->Sample(pixelOut.uv);
+
+				//finalColor = PixelShading(pixelOut);
+			}
+			else
+			{
+				const float depthColor{ Remap(interpolatedZDepth, 0.997f, 1.0f) };
+
+				finalColor = { depthColor, depthColor , depthColor };
+			}
+
+
+			//Update Color in Buffer
+			finalColor.MaxToOne();
+
+			m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+				static_cast<uint8_t>(finalColor.r * 255),
+				static_cast<uint8_t>(finalColor.g * 255),
+				static_cast<uint8_t>(finalColor.b * 255));
+		}
+	}
+}
 
 void Renderer::VertexTransformationFunction(Mesh& mesh) const
 {

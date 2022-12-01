@@ -35,6 +35,10 @@ namespace dae
 
 	struct BoundingBox
 	{
+		BoundingBox()
+		{
+
+		}
 		BoundingBox(int screenWidth, int screenHeight)
 		{
 			clampX = screenWidth + 1;
@@ -79,5 +83,15 @@ namespace dae
 
 		std::vector<Vertex_Out> vertices_out{};
 		Matrix worldMatrix{};
+	};
+
+	struct Triangle
+	{
+		Triangle() {
+			ndc.resize(3); screen.resize(3);
+		};
+		std::vector<Vertex_Out> ndc;
+		std::vector<Vector2> screen;
+		BoundingBox boundingBox;
 	};
 }

@@ -71,8 +71,8 @@ namespace dae
 		bool m_RenderBoundingBox{ false };
 		bool m_RenderFinalColor{ true };
 		bool m_RotationEnabled{ true };
-		bool m_UseNormalMap{ false };
-		ShadingMode m_ShadingMode{ ShadingMode::ObservedArea };
+		bool m_UseNormalMap{ true };
+		ShadingMode m_ShadingMode{ ShadingMode::Combined };
 
 		Texture* m_pDiffuseTexture{ nullptr };
 		Texture* m_pGlossTexture{ nullptr };
@@ -93,7 +93,12 @@ namespace dae
 		void RenderMesh(Mesh& mesh);
 
 		//function that renders a single triangle
-		void RenderTriangle(const Mesh& mesh, std::vector<Vector2> vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
+		void RenderTriangle(const Mesh& mesh, std::vector<Vector2>& vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
+
+		void RenderTriangle(const Triangle& triangle);
+
+		//function to setup current triangle
+		bool CalculateTriangle(Triangle& triangle,const Mesh& mesh, std::vector<Vector2>& vertices_ScreenSpace, int startIdx, bool flipTriangle = false);
 
 		//Function that transforms the vertices from the mesh from World space to Screen space
 		void VertexTransformationFunction(Mesh& mesh) const; //W1 Version
